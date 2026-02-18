@@ -18,7 +18,7 @@ export default function QuizPage() {
   const [currentQ, setCurrentQ] = useState(0);
   const [result, setResult] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
     const fetchQuiz = async () => {
