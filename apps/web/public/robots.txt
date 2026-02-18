@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /instructor
+Disallow: /learn
+Disallow: /api
+
+Sitemap: https://www.yunaiacademy.com/sitemap.xml
