@@ -33,7 +33,7 @@ ${courseContext ? `\nCurrent context: The student is studying "${courseContext}"
 Be concise, accurate, and encouraging. Use examples where helpful.
 If a question is outside CA/accounting topics, politely redirect the student.`;
 
-    const chatHistory = history.map((h) => ({
+    const chatHistory = history.map((h: { role: string; message: string }) => ({
       role: h.role as 'user' | 'model',
       parts: [{ text: h.message }],
     }));

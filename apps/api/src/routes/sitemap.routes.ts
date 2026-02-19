@@ -41,7 +41,7 @@ sitemapRouter.get('/sitemap.xml', async (_req, res, next) => {
 
     const courseUrls = courses
       .map(
-        (course) =>
+        (course: { slug: string; updatedAt: Date }) =>
           `  <url>
     <loc>${FRONTEND_URL}/courses/${course.slug}</loc>
     <lastmod>${course.updatedAt.toISOString().split('T')[0]}</lastmod>
