@@ -59,6 +59,31 @@ app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Yunai Academy API is running', timestamp: new Date().toISOString() });
 });
 
+// Database diagnostic (temporary)
+app.get('/api/debug/db', async (_req, res) => {
+  try {
+    const { prisma } = await import('./lib/prisma.js');
+    await prisma.$queryRaw`SELECT 1`;
+    const userCount = await prisma.user.count().catch(() => -1);
+    const courseCount = await prisma.course.count().catch(() => -1);
+    res.json({
+      success: true,
+      dbConnected: true,
+      users: userCount,
+      courses: courseCount,
+      dbUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:@]+@/, ':***@') : 'NOT SET',
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({
+      success: false,
+      dbConnected: false,
+      error: message,
+      dbUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:@]+@/, ':***@') : 'NOT SET',
+    });
+  }
+});
+
 // Routes
 app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/users', userRouter);
