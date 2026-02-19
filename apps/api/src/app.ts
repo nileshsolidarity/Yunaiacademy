@@ -63,8 +63,6 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/debug/db', async (_req, res) => {
   const dbUrl = process.env.DATABASE_URL || 'NOT SET';
   const masked = dbUrl !== 'NOT SET' ? dbUrl.replace(/:[^:@]+@/, ':***@') : dbUrl;
-  const urlLen = dbUrl.length;
-  const lastCharCode = dbUrl.charCodeAt(dbUrl.length - 1);
   try {
     const { prisma } = await import('./lib/prisma.js');
     await prisma.$queryRaw`SELECT 1`;
@@ -76,8 +74,6 @@ app.get('/api/debug/db', async (_req, res) => {
       users: userCount,
       courses: courseCount,
       dbUrl: masked,
-      dbUrlLength: urlLen,
-      lastCharCode,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -86,8 +82,14 @@ app.get('/api/debug/db', async (_req, res) => {
       dbConnected: false,
       error: message,
       dbUrl: masked,
-      dbUrlLength: urlLen,
-      lastCharCode,
+      railwayPgVars: {
+        PGHOST: process.env.PGHOST || 'NOT SET',
+        PGPORT: process.env.PGPORT || 'NOT SET',
+        PGUSER: process.env.PGUSER || 'NOT SET',
+        PGDATABASE: process.env.PGDATABASE || 'NOT SET',
+        DATABASE_PUBLIC_URL: process.env.DATABASE_PUBLIC_URL ? 'SET' : 'NOT SET',
+        DATABASE_URL_FROM_RAILWAY: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+      },
     });
   }
 });
