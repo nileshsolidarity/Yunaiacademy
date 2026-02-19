@@ -18,6 +18,6 @@ RUN pnpm --filter @yunai/api build
 # Verify latest code
 RUN grep -q "async function main" apps/api/dist/index.js && echo "BUILD OK"
 
-# Push DB schema at startup, then start server
+# Start server directly (run prisma db push separately)
 WORKDIR /app/apps/api
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/index.js"]
+CMD ["node", "dist/index.js"]
