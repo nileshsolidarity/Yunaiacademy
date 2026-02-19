@@ -1,7 +1,7 @@
-FROM node:20.18-alpine3.20
+FROM node:22-alpine
 
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@10.30.0 --activate
+# Install pnpm directly (avoid corepack signature issues)
+RUN npm install -g pnpm@10.30.0
 
 WORKDIR /app
 
@@ -15,8 +15,8 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @yunai/shared build
 RUN pnpm --filter @yunai/api build
 
-# Verify the build has our latest code with dynamic import
-RUN grep -q "async function main" apps/api/dist/index.js && echo "✅ Latest code confirmed" || (echo "❌ STALE BUILD" && exit 1)
+# Verify the build has our latest code
+RUN grep -q "async function main" apps/api/dist/index.js && echo "BUILD OK - latest code confirmed" || (echo "STALE BUILD - missing dynamic imports" && exit 1)
 
 # Start server
 WORKDIR /app/apps/api
