@@ -13,9 +13,10 @@ COPY packages/shared/ ./packages/shared/
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Generate Prisma client and build API
+# Build shared package first, then API
+RUN pnpm --filter @yunai/shared build
 RUN pnpm --filter @yunai/api build
 
-# Start server
+# Start server with node (not tsx)
 WORKDIR /app/apps/api
-CMD ["pnpm", "start"]
+CMD ["node", "dist/index.js"]
