@@ -1,6 +1,6 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @yunai/web build",
+  "buildCommand": "pnpm --filter @yunai/shared build && pnpm --filter @yunai/web build",
   "outputDirectory": "apps/web/dist",
   "framework": "vite",
   "rewrites": [
