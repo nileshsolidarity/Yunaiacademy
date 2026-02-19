@@ -20,4 +20,4 @@ RUN grep -q "async function main" apps/api/dist/index.js && echo "BUILD OK - lat
 
 # Start server
 WORKDIR /app/apps/api
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "echo 'Container starting with PORT='$PORT && node dist/index.js 2>&1"]
