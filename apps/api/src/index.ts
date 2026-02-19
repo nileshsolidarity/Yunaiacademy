@@ -24,20 +24,24 @@ async function runMigrations() {
   }
 }
 
-async function seedIfEmpty() {
+async function seedIfNeeded() {
   try {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
     const userCount = await prisma.user.count();
-    if (userCount === 0) {
-      console.log('🌱 Database is empty, running seed...');
+    const courseCount = await prisma.course.count();
+    const forceReseed = process.env.FORCE_RESEED === 'true';
+
+    if (userCount === 0 || forceReseed) {
+      const reason = forceReseed ? 'FORCE_RESEED=true' : 'database is empty';
+      console.log(`🌱 Running seed (${reason})...`);
       execSync('npx tsx prisma/seed.ts', {
         stdio: 'inherit',
-        timeout: 60000,
+        timeout: 300000,
       });
       console.log('✅ Database seeded successfully');
     } else {
-      console.log(`📊 Database already has ${userCount} users, skipping seed`);
+      console.log(`📊 Database: ${userCount} users, ${courseCount} courses — skipping seed`);
     }
     await prisma.$disconnect();
   } catch (error) {
@@ -61,7 +65,7 @@ async function main() {
 
     // Seed database if migrations succeeded and DB is empty
     if (migrationOk) {
-      await seedIfEmpty();
+      await seedIfNeeded();
     }
 
     console.log('📦 Loading modules...');

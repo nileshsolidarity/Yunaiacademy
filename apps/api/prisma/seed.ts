@@ -1,12 +1,122 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { foundationCourses } from './seed-data/foundation.js';
+import { intermediateCourses } from './seed-data/intermediate.js';
+import { finalCourses } from './seed-data/final.js';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('🌱 Seeding database...');
+interface QuestionData {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+}
 
-  // Create admin user
+interface ModuleData {
+  title: string;
+  textContent: string;
+  quizTitle: string;
+  questions: QuestionData[];
+}
+
+export interface CourseData {
+  title: string;
+  slug: string;
+  description: string;
+  category: string;
+  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  modules: ModuleData[];
+}
+
+async function createCourseWithContent(courseData: CourseData, instructorId: string) {
+  // Upsert the course
+  const course = await prisma.course.upsert({
+    where: { slug: courseData.slug },
+    update: {
+      title: courseData.title,
+      description: courseData.description,
+      category: courseData.category,
+      level: courseData.level,
+      status: 'PUBLISHED',
+    },
+    create: {
+      title: courseData.title,
+      slug: courseData.slug,
+      description: courseData.description,
+      category: courseData.category,
+      level: courseData.level,
+      status: 'PUBLISHED',
+      instructorId,
+    },
+  });
+
+  // Delete existing modules (cascades to lessons, quizzes, questions)
+  await prisma.module.deleteMany({ where: { courseId: course.id } });
+
+  // Create modules with lessons and quizzes
+  for (let mi = 0; mi < courseData.modules.length; mi++) {
+    const mod = courseData.modules[mi];
+
+    const module = await prisma.module.create({
+      data: {
+        title: mod.title,
+        order: mi,
+        courseId: course.id,
+      },
+    });
+
+    // Create text lesson
+    await prisma.lesson.create({
+      data: {
+        title: mod.title,
+        type: 'TEXT',
+        content: mod.textContent,
+        duration: 900,
+        order: 0,
+        moduleId: module.id,
+      },
+    });
+
+    // Create quiz lesson with linked quiz and questions
+    const quizLesson = await prisma.lesson.create({
+      data: {
+        title: `Quiz: ${mod.title}`,
+        type: 'QUIZ',
+        duration: 600,
+        order: 1,
+        moduleId: module.id,
+      },
+    });
+
+    const quiz = await prisma.quiz.create({
+      data: {
+        title: mod.quizTitle,
+        lessonId: quizLesson.id,
+        passingScore: 60,
+        timeLimit: 10,
+      },
+    });
+
+    await prisma.quizQuestion.createMany({
+      data: mod.questions.map((q, qi) => ({
+        quizId: quiz.id,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        order: qi,
+      })),
+    });
+  }
+
+  return course;
+}
+
+async function main() {
+  console.log('🌱 Seeding database with comprehensive CA content...');
+
+  // Create users
   const adminPassword = await bcrypt.hash('Admin@123', 12);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@yunaiacademy.com' },
@@ -19,9 +129,8 @@ async function main() {
       emailVerified: true,
     },
   });
-  console.log(`✅ Admin user: ${admin.email}`);
+  console.log(`✅ Admin: ${admin.email}`);
 
-  // Create instructor
   const instructorPassword = await bcrypt.hash('Instructor@123', 12);
   const instructor = await prisma.user.upsert({
     where: { email: 'instructor@yunaiacademy.com' },
@@ -35,9 +144,8 @@ async function main() {
       bio: 'CA with 15 years of teaching experience specializing in Taxation and Auditing.',
     },
   });
-  console.log(`✅ Instructor user: ${instructor.email}`);
+  console.log(`✅ Instructor: ${instructor.email}`);
 
-  // Create student
   const studentPassword = await bcrypt.hash('Student@123', 12);
   const student = await prisma.user.upsert({
     where: { email: 'student@yunaiacademy.com' },
@@ -50,94 +158,36 @@ async function main() {
       emailVerified: true,
     },
   });
-  console.log(`✅ Student user: ${student.email}`);
+  console.log(`✅ Student: ${student.email}`);
 
-  // Create demo courses
-  const course1 = await prisma.course.upsert({
-    where: { slug: 'ca-foundation-accounting' },
-    update: {},
-    create: {
-      title: 'CA Foundation - Principles of Accounting',
-      slug: 'ca-foundation-accounting',
-      description: 'Master the fundamentals of accounting as per the CA Foundation syllabus. Covers journal entries, ledger posting, trial balance, and financial statements preparation.',
-      category: 'CA Foundation',
-      level: 'BEGINNER',
-      status: 'PUBLISHED',
-      instructorId: instructor.id,
-    },
-  });
+  // Seed all courses
+  const allCourses = [...foundationCourses, ...intermediateCourses, ...finalCourses];
 
-  // Add modules and lessons
-  const module1 = await prisma.module.create({
-    data: {
-      title: 'Introduction to Accounting',
-      order: 0,
-      courseId: course1.id,
-    },
-  });
+  for (const courseData of allCourses) {
+    const course = await createCourseWithContent(courseData, instructor.id);
+    console.log(`✅ ${course.title} (${courseData.modules.length} modules)`);
+  }
 
-  await prisma.lesson.createMany({
-    data: [
-      { title: 'What is Accounting?', type: 'VIDEO', videoUrl: 'https://www.youtube.com/watch?v=example1', duration: 1200, order: 0, moduleId: module1.id },
-      { title: 'Types of Accounts', type: 'VIDEO', videoUrl: 'https://www.youtube.com/watch?v=example2', duration: 900, order: 1, moduleId: module1.id },
-      { title: 'Golden Rules of Accounting', type: 'TEXT', content: '# Golden Rules of Accounting\n\n## 1. Personal Account\n- Debit the receiver\n- Credit the giver\n\n## 2. Real Account\n- Debit what comes in\n- Credit what goes out\n\n## 3. Nominal Account\n- Debit all expenses and losses\n- Credit all incomes and gains', order: 2, moduleId: module1.id },
-    ],
-  });
+  // Enroll student in foundation courses
+  for (const fd of foundationCourses) {
+    const course = await prisma.course.findUnique({ where: { slug: fd.slug } });
+    if (course) {
+      await prisma.enrollment.upsert({
+        where: { userId_courseId: { userId: student.id, courseId: course.id } },
+        update: {},
+        create: { userId: student.id, courseId: course.id, progress: 0 },
+      });
+    }
+  }
+  console.log('✅ Student enrolled in Foundation courses');
 
-  const module2 = await prisma.module.create({
-    data: {
-      title: 'Journal Entries',
-      order: 1,
-      courseId: course1.id,
-    },
-  });
-
-  await prisma.lesson.createMany({
-    data: [
-      { title: 'Understanding Journal Entries', type: 'VIDEO', videoUrl: 'https://www.youtube.com/watch?v=example3', duration: 1500, order: 0, moduleId: module2.id },
-      { title: 'Practice Problems', type: 'TEXT', content: '# Practice Problems\n\nSolve the following journal entry problems...', order: 1, moduleId: module2.id },
-    ],
-  });
-
-  const course2 = await prisma.course.upsert({
-    where: { slug: 'ca-intermediate-taxation' },
-    update: {},
-    create: {
-      title: 'CA Intermediate - Income Tax & GST',
-      slug: 'ca-intermediate-taxation',
-      description: 'Comprehensive coverage of Direct Tax and GST as per CA Intermediate syllabus. Includes practical problems and recent amendments.',
-      category: 'Taxation',
-      level: 'INTERMEDIATE',
-      status: 'PUBLISHED',
-      instructorId: instructor.id,
-    },
-  });
-
-  const course3 = await prisma.course.upsert({
-    where: { slug: 'ca-final-advanced-auditing' },
-    update: {},
-    create: {
-      title: 'CA Final - Advanced Auditing & Ethics',
-      slug: 'ca-final-advanced-auditing',
-      description: 'In-depth coverage of auditing standards, company audit, special audits, and professional ethics for CA Final students.',
-      category: 'Auditing',
-      level: 'ADVANCED',
-      status: 'PUBLISHED',
-      instructorId: instructor.id,
-    },
-  });
-
-  console.log(`✅ Created courses: ${course1.title}, ${course2.title}, ${course3.title}`);
-
-  // Enroll student in first course
-  await prisma.enrollment.upsert({
-    where: { userId_courseId: { userId: student.id, courseId: course1.id } },
-    update: {},
-    create: { userId: student.id, courseId: course1.id, progress: 20 },
-  });
-
-  console.log('✅ Student enrolled in CA Foundation course');
-  console.log('🎉 Seed complete!');
+  const totalCourses = await prisma.course.count();
+  const totalModules = await prisma.module.count();
+  const totalLessons = await prisma.lesson.count();
+  const totalQuizzes = await prisma.quiz.count();
+  const totalQuestions = await prisma.quizQuestion.count();
+  console.log(`\n🎉 Seed complete!`);
+  console.log(`📊 ${totalCourses} courses, ${totalModules} modules, ${totalLessons} lessons, ${totalQuizzes} quizzes, ${totalQuestions} questions`);
 }
 
 main()
