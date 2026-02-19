@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service.js';
-import type { AuthRequest } from '../middleware/auth.js';
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
@@ -68,7 +67,7 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export async function logout(req: AuthRequest, res: Response, next: NextFunction) {
+export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
     if (req.user) {
       await authService.logoutUser(req.user.id);
@@ -102,7 +101,7 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
   }
 }
 
-export async function me(req: AuthRequest, res: Response, next: NextFunction) {
+export async function me(req: Request, res: Response, next: NextFunction) {
   try {
     const user = await authService.getCurrentUser(req.user!.id);
     res.json({ success: true, data: user });

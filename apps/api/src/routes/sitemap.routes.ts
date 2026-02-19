@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { env } from '../config/env.js';
 
-export const sitemapRouter = Router();
+export const sitemapRouter: Router = Router();
 
 const FRONTEND_URL = env.FRONTEND_URL || 'https://www.yunaiacademy.com';
 

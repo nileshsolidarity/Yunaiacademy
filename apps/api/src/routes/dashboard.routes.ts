@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 
-export const dashboardRouter = Router();
+export const dashboardRouter: Router = Router();
 
 // Student dashboard stats
-dashboardRouter.get('/student', authenticate, async (req: AuthRequest, res, next) => {
+dashboardRouter.get('/student', authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.id;
 
@@ -38,7 +37,7 @@ dashboardRouter.get('/student', authenticate, async (req: AuthRequest, res, next
 });
 
 // Instructor dashboard stats
-dashboardRouter.get('/instructor', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), async (req: AuthRequest, res, next) => {
+dashboardRouter.get('/instructor', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), async (req, res, next) => {
   try {
     const instructorId = req.user!.id;
 

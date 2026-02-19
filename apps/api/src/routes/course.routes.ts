@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { createCourseSchema, updateCourseSchema, createModuleSchema, createLessonSchema, paginationSchema } from '@yunai/shared';
 
-export const courseRouter = Router();
+export const courseRouter: Router = Router();
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -78,7 +77,7 @@ courseRouter.get('/:slug', async (req, res, next) => {
 });
 
 // Create course (instructor/admin)
-courseRouter.post('/', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), validate(createCourseSchema), async (req: AuthRequest, res, next) => {
+courseRouter.post('/', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), validate(createCourseSchema), async (req, res, next) => {
   try {
     const slug = slugify(req.body.title) + '-' + Date.now().toString(36);
     const course = await prisma.course.create({
@@ -89,16 +88,17 @@ courseRouter.post('/', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), validat
 });
 
 // Update course (owner/admin)
-courseRouter.put('/:id', authenticate, validate(updateCourseSchema), async (req: AuthRequest, res, next) => {
+courseRouter.put('/:id', authenticate, validate(updateCourseSchema), async (req, res, next) => {
   try {
-    const course = await prisma.course.findUnique({ where: { id: req.params.id } });
+    const courseId = req.params.id as string;
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course) { res.status(404).json({ success: false, error: 'Course not found' }); return; }
     if (course.instructorId !== req.user!.id && req.user!.role !== 'ADMIN') {
       res.status(403).json({ success: false, error: 'Not authorized' }); return;
     }
 
     const updated = await prisma.course.update({
-      where: { id: req.params.id },
+      where: { id: courseId },
       data: req.body,
     });
     res.json({ success: true, data: updated });
@@ -106,9 +106,10 @@ courseRouter.put('/:id', authenticate, validate(updateCourseSchema), async (req:
 });
 
 // Publish/unpublish course
-courseRouter.patch('/:id/publish', authenticate, async (req: AuthRequest, res, next) => {
+courseRouter.patch('/:id/publish', authenticate, async (req, res, next) => {
   try {
-    const course = await prisma.course.findUnique({ where: { id: req.params.id } });
+    const courseId = req.params.id as string;
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course) { res.status(404).json({ success: false, error: 'Course not found' }); return; }
     if (course.instructorId !== req.user!.id && req.user!.role !== 'ADMIN') {
       res.status(403).json({ success: false, error: 'Not authorized' }); return;
@@ -116,7 +117,7 @@ courseRouter.patch('/:id/publish', authenticate, async (req: AuthRequest, res, n
 
     const newStatus = course.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
     const updated = await prisma.course.update({
-      where: { id: req.params.id },
+      where: { id: courseId },
       data: { status: newStatus },
     });
     res.json({ success: true, data: updated });
@@ -124,39 +125,41 @@ courseRouter.patch('/:id/publish', authenticate, async (req: AuthRequest, res, n
 });
 
 // Add module to course
-courseRouter.post('/:id/modules', authenticate, validate(createModuleSchema), async (req: AuthRequest, res, next) => {
+courseRouter.post('/:id/modules', authenticate, validate(createModuleSchema), async (req, res, next) => {
   try {
-    const course = await prisma.course.findUnique({ where: { id: req.params.id } });
+    const courseId = req.params.id as string;
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course || (course.instructorId !== req.user!.id && req.user!.role !== 'ADMIN')) {
       res.status(403).json({ success: false, error: 'Not authorized' }); return;
     }
 
-    const moduleCount = await prisma.module.count({ where: { courseId: req.params.id } });
+    const moduleCount = await prisma.module.count({ where: { courseId } });
     const module = await prisma.module.create({
-      data: { ...req.body, courseId: req.params.id, order: req.body.order ?? moduleCount },
+      data: { ...req.body, courseId, order: req.body.order ?? moduleCount },
     });
     res.status(201).json({ success: true, data: module });
   } catch (error) { next(error); }
 });
 
 // Add lesson to module
-courseRouter.post('/modules/:moduleId/lessons', authenticate, validate(createLessonSchema), async (req: AuthRequest, res, next) => {
+courseRouter.post('/modules/:moduleId/lessons', authenticate, validate(createLessonSchema), async (req, res, next) => {
   try {
-    const module = await prisma.module.findUnique({ where: { id: req.params.moduleId }, include: { course: true } });
-    if (!module || (module.course.instructorId !== req.user!.id && req.user!.role !== 'ADMIN')) {
+    const moduleId = req.params.moduleId as string;
+    const module = await prisma.module.findUnique({ where: { id: moduleId }, include: { course: true } });
+    if (!module || ((module as any).course.instructorId !== req.user!.id && req.user!.role !== 'ADMIN')) {
       res.status(403).json({ success: false, error: 'Not authorized' }); return;
     }
 
-    const lessonCount = await prisma.lesson.count({ where: { moduleId: req.params.moduleId } });
+    const lessonCount = await prisma.lesson.count({ where: { moduleId } });
     const lesson = await prisma.lesson.create({
-      data: { ...req.body, moduleId: req.params.moduleId, order: req.body.order ?? lessonCount },
+      data: { ...req.body, moduleId, order: req.body.order ?? lessonCount },
     });
     res.status(201).json({ success: true, data: lesson });
   } catch (error) { next(error); }
 });
 
 // Get instructor's courses
-courseRouter.get('/instructor/mine', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), async (req: AuthRequest, res, next) => {
+courseRouter.get('/instructor/mine', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), async (req, res, next) => {
   try {
     const courses = await prisma.course.findMany({
       where: { instructorId: req.user!.id },

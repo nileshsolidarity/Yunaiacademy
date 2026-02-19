@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth.js';
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '@yunai/shared';
 import * as authController from '../controllers/auth.controller.js';
 
-export const authRouter = Router();
+export const authRouter: Router = Router();
 
 authRouter.post('/register', validate(registerSchema), authController.register);
 authRouter.post('/login', validate(loginSchema), authController.login);

@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { env } from '../config/env.js';
 
-export const aiRouter = Router();
+export const aiRouter: Router = Router();
 
 // AI Chat - send message
-aiRouter.post('/chat', authenticate, async (req: AuthRequest, res, next) => {
+aiRouter.post('/chat', authenticate, async (req, res, next) => {
   try {
     const { message, sessionId, courseContext } = req.body;
 
@@ -63,7 +62,7 @@ If a question is outside CA/accounting topics, politely redirect the student.`;
 });
 
 // Get chat history
-aiRouter.get('/chat/history', authenticate, async (req: AuthRequest, res, next) => {
+aiRouter.get('/chat/history', authenticate, async (req, res, next) => {
   try {
     const { sessionId } = req.query;
     const history = await prisma.aiChatHistory.findMany({
@@ -78,7 +77,7 @@ aiRouter.get('/chat/history', authenticate, async (req: AuthRequest, res, next) 
 });
 
 // AI-powered course recommendations
-aiRouter.get('/recommend', authenticate, async (req: AuthRequest, res, next) => {
+aiRouter.get('/recommend', authenticate, async (req, res, next) => {
   try {
     // Get user's enrolled courses and progress
     const enrollments = await prisma.enrollment.findMany({

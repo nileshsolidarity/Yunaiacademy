@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 
-export const notificationRouter = Router();
+export const notificationRouter: Router = Router();
 
 // Get user notifications
-notificationRouter.get('/', authenticate, async (req: AuthRequest, res, next) => {
+notificationRouter.get('/', authenticate, async (req, res, next) => {
   try {
     const notifications = await prisma.notification.findMany({
       where: { userId: req.user!.id },
@@ -23,10 +22,10 @@ notificationRouter.get('/', authenticate, async (req: AuthRequest, res, next) =>
 });
 
 // Mark single notification as read
-notificationRouter.patch('/:id/read', authenticate, async (req: AuthRequest, res, next) => {
+notificationRouter.patch('/:id/read', authenticate, async (req, res, next) => {
   try {
     await prisma.notification.update({
-      where: { id: req.params.id, userId: req.user!.id },
+      where: { id: req.params.id as string, userId: req.user!.id },
       data: { read: true },
     });
     res.json({ success: true, message: 'Notification marked as read' });
@@ -34,7 +33,7 @@ notificationRouter.patch('/:id/read', authenticate, async (req: AuthRequest, res
 });
 
 // Mark all as read
-notificationRouter.patch('/read-all', authenticate, async (req: AuthRequest, res, next) => {
+notificationRouter.patch('/read-all', authenticate, async (req, res, next) => {
   try {
     await prisma.notification.updateMany({
       where: { userId: req.user!.id, read: false },

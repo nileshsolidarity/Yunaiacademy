@@ -1,26 +1,26 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { createReviewSchema, paginationSchema } from '@yunai/shared';
 
-export const reviewRouter = Router();
+export const reviewRouter: Router = Router();
 
 // Get reviews for a course
 reviewRouter.get('/courses/:courseId', async (req, res, next) => {
   try {
+    const courseId = req.params.courseId as string;
     const { page, limit } = paginationSchema.parse(req.query);
 
     const [reviews, total] = await Promise.all([
       prisma.review.findMany({
-        where: { courseId: req.params.courseId },
+        where: { courseId },
         include: { user: { select: { id: true, name: true, avatar: true } } },
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.review.count({ where: { courseId: req.params.courseId } }),
+      prisma.review.count({ where: { courseId } }),
     ]);
 
     res.json({
@@ -32,11 +32,12 @@ reviewRouter.get('/courses/:courseId', async (req, res, next) => {
 });
 
 // Create review
-reviewRouter.post('/courses/:courseId', authenticate, validate(createReviewSchema), async (req: AuthRequest, res, next) => {
+reviewRouter.post('/courses/:courseId', authenticate, validate(createReviewSchema), async (req, res, next) => {
   try {
+    const courseId = req.params.courseId as string;
     // Check enrollment
     const enrollment = await prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId: req.user!.id, courseId: req.params.courseId } },
+      where: { userId_courseId: { userId: req.user!.id, courseId } },
     });
     if (!enrollment) {
       res.status(403).json({ success: false, error: 'You must be enrolled to review this course' });
@@ -44,8 +45,8 @@ reviewRouter.post('/courses/:courseId', authenticate, validate(createReviewSchem
     }
 
     const review = await prisma.review.upsert({
-      where: { userId_courseId: { userId: req.user!.id, courseId: req.params.courseId } },
-      create: { userId: req.user!.id, courseId: req.params.courseId, ...req.body },
+      where: { userId_courseId: { userId: req.user!.id, courseId } },
+      create: { userId: req.user!.id, courseId, ...req.body },
       update: req.body,
       include: { user: { select: { id: true, name: true, avatar: true } } },
     });
@@ -55,14 +56,15 @@ reviewRouter.post('/courses/:courseId', authenticate, validate(createReviewSchem
 });
 
 // Delete review
-reviewRouter.delete('/:id', authenticate, async (req: AuthRequest, res, next) => {
+reviewRouter.delete('/:id', authenticate, async (req, res, next) => {
   try {
-    const review = await prisma.review.findUnique({ where: { id: req.params.id } });
+    const reviewId = req.params.id as string;
+    const review = await prisma.review.findUnique({ where: { id: reviewId } });
     if (!review || (review.userId !== req.user!.id && req.user!.role !== 'ADMIN')) {
       res.status(403).json({ success: false, error: 'Not authorized' });
       return;
     }
-    await prisma.review.delete({ where: { id: req.params.id } });
+    await prisma.review.delete({ where: { id: reviewId } });
     res.json({ success: true, message: 'Review deleted' });
   } catch (error) { next(error); }
 });

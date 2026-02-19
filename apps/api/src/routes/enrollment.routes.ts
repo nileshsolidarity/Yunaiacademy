@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 
-export const enrollmentRouter = Router();
+export const enrollmentRouter: Router = Router();
 
 // Get user's enrollments
-enrollmentRouter.get('/', authenticate, async (req: AuthRequest, res, next) => {
+enrollmentRouter.get('/', authenticate, async (req, res, next) => {
   try {
     const enrollments = await prisma.enrollment.findMany({
       where: { userId: req.user!.id },
@@ -25,16 +24,17 @@ enrollmentRouter.get('/', authenticate, async (req: AuthRequest, res, next) => {
 });
 
 // Enroll in a course
-enrollmentRouter.post('/courses/:courseId', authenticate, async (req: AuthRequest, res, next) => {
+enrollmentRouter.post('/courses/:courseId', authenticate, async (req, res, next) => {
   try {
-    const course = await prisma.course.findUnique({ where: { id: req.params.courseId } });
+    const courseId = req.params.courseId as string;
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course || course.status !== 'PUBLISHED') {
       res.status(404).json({ success: false, error: 'Course not found or not available' });
       return;
     }
 
     const existing = await prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId: req.user!.id, courseId: req.params.courseId } },
+      where: { userId_courseId: { userId: req.user!.id, courseId } },
     });
     if (existing) {
       res.status(409).json({ success: false, error: 'Already enrolled' });
@@ -42,30 +42,31 @@ enrollmentRouter.post('/courses/:courseId', authenticate, async (req: AuthReques
     }
 
     const enrollment = await prisma.enrollment.create({
-      data: { userId: req.user!.id, courseId: req.params.courseId },
+      data: { userId: req.user!.id, courseId },
     });
     res.status(201).json({ success: true, data: enrollment });
   } catch (error) { next(error); }
 });
 
 // Mark lesson as complete
-enrollmentRouter.post('/lessons/:lessonId/complete', authenticate, async (req: AuthRequest, res, next) => {
+enrollmentRouter.post('/lessons/:lessonId/complete', authenticate, async (req, res, next) => {
   try {
+    const lessonId = req.params.lessonId as string;
     const progress = await prisma.lessonProgress.upsert({
-      where: { userId_lessonId: { userId: req.user!.id, lessonId: req.params.lessonId } },
-      create: { userId: req.user!.id, lessonId: req.params.lessonId, completed: true, completedAt: new Date() },
+      where: { userId_lessonId: { userId: req.user!.id, lessonId } },
+      create: { userId: req.user!.id, lessonId, completed: true, completedAt: new Date() },
       update: { completed: true, completedAt: new Date() },
     });
 
     // Update overall course progress
     const lesson = await prisma.lesson.findUnique({
-      where: { id: req.params.lessonId },
+      where: { id: lessonId },
       include: { module: { include: { course: { include: { modules: { include: { lessons: true } } } } } } },
     });
 
     if (lesson) {
-      const courseId = lesson.module.courseId;
-      const totalLessons = lesson.module.course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+      const courseId = (lesson as any).module.courseId;
+      const totalLessons = (lesson as any).module.course.modules.reduce((sum: number, m: any) => sum + m.lessons.length, 0);
       const completedLessons = await prisma.lessonProgress.count({
         where: {
           userId: req.user!.id,
@@ -90,17 +91,18 @@ enrollmentRouter.post('/lessons/:lessonId/complete', authenticate, async (req: A
 });
 
 // Get course progress detail
-enrollmentRouter.get('/courses/:courseId/progress', authenticate, async (req: AuthRequest, res, next) => {
+enrollmentRouter.get('/courses/:courseId/progress', authenticate, async (req, res, next) => {
   try {
+    const courseId = req.params.courseId as string;
     const enrollment = await prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId: req.user!.id, courseId: req.params.courseId } },
+      where: { userId_courseId: { userId: req.user!.id, courseId } },
     });
 
     const completedLessons = await prisma.lessonProgress.findMany({
       where: {
         userId: req.user!.id,
         completed: true,
-        lesson: { module: { courseId: req.params.courseId } },
+        lesson: { module: { courseId } },
       },
       select: { lessonId: true, completedAt: true },
     });

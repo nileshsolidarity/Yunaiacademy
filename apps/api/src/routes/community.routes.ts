@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { createPostSchema, createCommentSchema, paginationSchema } from '@yunai/shared';
 
-export const communityRouter = Router();
+export const communityRouter: Router = Router();
 
 // List posts
 communityRouter.get('/posts', async (req, res, next) => {
@@ -65,7 +64,7 @@ communityRouter.get('/posts/:id', async (req, res, next) => {
 });
 
 // Create post
-communityRouter.post('/posts', authenticate, validate(createPostSchema), async (req: AuthRequest, res, next) => {
+communityRouter.post('/posts', authenticate, validate(createPostSchema), async (req, res, next) => {
   try {
     const post = await prisma.post.create({
       data: { ...req.body, userId: req.user!.id },
@@ -76,10 +75,10 @@ communityRouter.post('/posts', authenticate, validate(createPostSchema), async (
 });
 
 // Add comment
-communityRouter.post('/posts/:id/comments', authenticate, validate(createCommentSchema), async (req: AuthRequest, res, next) => {
+communityRouter.post('/posts/:id/comments', authenticate, validate(createCommentSchema), async (req, res, next) => {
   try {
     const comment = await prisma.comment.create({
-      data: { content: req.body.content, userId: req.user!.id, postId: req.params.id },
+      data: { content: req.body.content, userId: req.user!.id, postId: req.params.id as string },
       include: { user: { select: { id: true, name: true, avatar: true } } },
     });
     res.status(201).json({ success: true, data: comment });
@@ -87,14 +86,14 @@ communityRouter.post('/posts/:id/comments', authenticate, validate(createComment
 });
 
 // Delete post (owner/admin)
-communityRouter.delete('/posts/:id', authenticate, async (req: AuthRequest, res, next) => {
+communityRouter.delete('/posts/:id', authenticate, async (req, res, next) => {
   try {
-    const post = await prisma.post.findUnique({ where: { id: req.params.id } });
+    const post = await prisma.post.findUnique({ where: { id: req.params.id as string } });
     if (!post || (post.userId !== req.user!.id && req.user!.role !== 'ADMIN')) {
       res.status(403).json({ success: false, error: 'Not authorized' });
       return;
     }
-    await prisma.post.delete({ where: { id: req.params.id } });
+    await prisma.post.delete({ where: { id: req.params.id as string } });
     res.json({ success: true, message: 'Post deleted' });
   } catch (error) { next(error); }
 });

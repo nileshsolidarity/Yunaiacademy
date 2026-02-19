@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import crypto from 'crypto';
 
-export const certificateRouter = Router();
+export const certificateRouter: Router = Router();
 
 // Get user's certificates
-certificateRouter.get('/', authenticate, async (req: AuthRequest, res, next) => {
+certificateRouter.get('/', authenticate, async (req, res, next) => {
   try {
     const certificates = await prisma.certificate.findMany({
       where: { userId: req.user!.id },
@@ -21,9 +20,9 @@ certificateRouter.get('/', authenticate, async (req: AuthRequest, res, next) => 
 });
 
 // Generate certificate for a completed course
-certificateRouter.post('/courses/:courseId', authenticate, async (req: AuthRequest, res, next) => {
+certificateRouter.post('/courses/:courseId', authenticate, async (req, res, next) => {
   try {
-    const { courseId } = req.params;
+    const courseId = req.params.courseId as string;
     const userId = req.user!.id;
 
     // Check enrollment and completion

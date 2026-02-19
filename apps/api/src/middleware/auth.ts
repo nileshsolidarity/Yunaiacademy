@@ -4,15 +4,12 @@ import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 import type { UserRole } from '@prisma/client';
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: UserRole;
-  };
-}
+// Re-export Request as AuthRequest for backward compatibility.
+// Express.User is augmented in ../types/express.d.ts with {id, email, role},
+// so req.user already has the correct shape on the base Request type.
+export type AuthRequest = Request;
 
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+export function authenticate(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({ success: false, error: 'Access token required' });
@@ -34,7 +31,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
 }
 
 export function requireRole(...roles: UserRole[]) {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       res.status(401).json({ success: false, error: 'Authentication required' });
       return;

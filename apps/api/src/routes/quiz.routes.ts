@@ -1,17 +1,16 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { quizSubmissionSchema } from '@yunai/shared';
 
-export const quizRouter = Router();
+export const quizRouter: Router = Router();
 
 // Get quiz (without correct answers)
 quizRouter.get('/:id', authenticate, async (req, res, next) => {
   try {
     const quiz = await prisma.quiz.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         questions: {
           orderBy: { order: 'asc' },
@@ -30,10 +29,10 @@ quizRouter.get('/:id', authenticate, async (req, res, next) => {
 });
 
 // Submit quiz answers
-quizRouter.post('/:id/submit', authenticate, validate(quizSubmissionSchema), async (req: AuthRequest, res, next) => {
+quizRouter.post('/:id/submit', authenticate, validate(quizSubmissionSchema), async (req, res, next) => {
   try {
     const quiz = await prisma.quiz.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: { questions: true },
     });
 
@@ -45,13 +44,13 @@ quizRouter.post('/:id/submit', authenticate, validate(quizSubmissionSchema), asy
     const { answers } = req.body;
     let correctCount = 0;
 
-    for (const question of quiz.questions) {
+    for (const question of (quiz as any).questions) {
       if (answers[question.id] === question.correctAnswer) {
         correctCount++;
       }
     }
 
-    const score = quiz.questions.length > 0 ? (correctCount / quiz.questions.length) * 100 : 0;
+    const score = (quiz as any).questions.length > 0 ? (correctCount / (quiz as any).questions.length) * 100 : 0;
 
     const attempt = await prisma.quizAttempt.create({
       data: {
@@ -70,7 +69,7 @@ quizRouter.post('/:id/submit', authenticate, validate(quizSubmissionSchema), asy
         attempt,
         score,
         passed,
-        totalQuestions: quiz.questions.length,
+        totalQuestions: (quiz as any).questions.length,
         correctAnswers: correctCount,
       },
     });
@@ -78,10 +77,10 @@ quizRouter.post('/:id/submit', authenticate, validate(quizSubmissionSchema), asy
 });
 
 // Get user's attempts for a quiz
-quizRouter.get('/:id/attempts', authenticate, async (req: AuthRequest, res, next) => {
+quizRouter.get('/:id/attempts', authenticate, async (req, res, next) => {
   try {
     const attempts = await prisma.quizAttempt.findMany({
-      where: { userId: req.user!.id, quizId: req.params.id },
+      where: { userId: req.user!.id, quizId: req.params.id as string },
       orderBy: { submittedAt: 'desc' },
     });
     res.json({ success: true, data: attempts });
@@ -89,10 +88,10 @@ quizRouter.get('/:id/attempts', authenticate, async (req: AuthRequest, res, next
 });
 
 // Get specific attempt with correct answers
-quizRouter.get('/:id/attempts/:attemptId', authenticate, async (req: AuthRequest, res, next) => {
+quizRouter.get('/:id/attempts/:attemptId', authenticate, async (req, res, next) => {
   try {
     const attempt = await prisma.quizAttempt.findFirst({
-      where: { id: req.params.attemptId, userId: req.user!.id },
+      where: { id: req.params.attemptId as string, userId: req.user!.id },
       include: {
         quiz: {
           include: {

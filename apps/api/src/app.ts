@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -19,7 +19,7 @@ import { dashboardRouter } from './routes/dashboard.routes.js';
 import { certificateRouter } from './routes/certificate.routes.js';
 import { sitemapRouter } from './routes/sitemap.routes.js';
 
-const app = express();
+const app: Express = express();
 
 // Security
 app.use(helmet());

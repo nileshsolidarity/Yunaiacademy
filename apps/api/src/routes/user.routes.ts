@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { paginationSchema } from '@yunai/shared';
 
-export const userRouter = Router();
+export const userRouter: Router = Router();
 
 // Get user profile
-userRouter.get('/profile', authenticate, async (req: AuthRequest, res, next) => {
+userRouter.get('/profile', authenticate, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
@@ -22,7 +21,7 @@ userRouter.get('/profile', authenticate, async (req: AuthRequest, res, next) => 
 });
 
 // Update profile
-userRouter.put('/profile', authenticate, async (req: AuthRequest, res, next) => {
+userRouter.put('/profile', authenticate, async (req, res, next) => {
   try {
     const { name, bio, avatar } = req.body;
     const user = await prisma.user.update({
@@ -70,7 +69,7 @@ userRouter.patch('/:id/role', authenticate, requireRole('ADMIN'), async (req, re
   try {
     const { role } = req.body;
     const user = await prisma.user.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { role },
       select: { id: true, name: true, email: true, role: true },
     });
