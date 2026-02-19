@@ -23,9 +23,29 @@ const app: Express = express();
 
 // Security
 app.use(helmet());
+
+// CORS - allow frontend domain and custom domain
+const allowedOrigins = [
+  env.FRONTEND_URL.replace(/\/+$/, ''), // Remove trailing slash
+  'https://www.yunaiacademy.com',
+  'https://yunaiacademy.com',
+  'https://yunai-academy-iota.vercel.app',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      // Allow all Vercel preview deployments
+      if (origin.includes('vercel.app')) {
+        return callback(null, true);
+      }
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   }),
 );
@@ -57,41 +77,6 @@ if (env.NODE_ENV !== 'test') {
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Yunai Academy API is running', timestamp: new Date().toISOString() });
-});
-
-// Database diagnostic (temporary)
-app.get('/api/debug/db', async (_req, res) => {
-  const dbUrl = process.env.DATABASE_URL || 'NOT SET';
-  const masked = dbUrl !== 'NOT SET' ? dbUrl.replace(/:[^:@]+@/, ':***@') : dbUrl;
-  try {
-    const { prisma } = await import('./lib/prisma.js');
-    await prisma.$queryRaw`SELECT 1`;
-    const userCount = await prisma.user.count().catch(() => -1);
-    const courseCount = await prisma.course.count().catch(() => -1);
-    res.json({
-      success: true,
-      dbConnected: true,
-      users: userCount,
-      courses: courseCount,
-      dbUrl: masked,
-    });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    res.status(500).json({
-      success: false,
-      dbConnected: false,
-      error: message,
-      dbUrl: masked,
-      railwayPgVars: {
-        PGHOST: process.env.PGHOST || 'NOT SET',
-        PGPORT: process.env.PGPORT || 'NOT SET',
-        PGUSER: process.env.PGUSER || 'NOT SET',
-        PGDATABASE: process.env.PGDATABASE || 'NOT SET',
-        DATABASE_PUBLIC_URL: process.env.DATABASE_PUBLIC_URL ? 'SET' : 'NOT SET',
-        DATABASE_URL_FROM_RAILWAY: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
-      },
-    });
-  }
 });
 
 // Routes
