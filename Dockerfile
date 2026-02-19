@@ -16,8 +16,8 @@ RUN pnpm --filter @yunai/shared build
 RUN pnpm --filter @yunai/api build
 
 # Verify latest code
-RUN grep -q "async function main" apps/api/dist/index.js && echo "BUILD OK"
+RUN grep -q "runMigrations" apps/api/dist/index.js && echo "BUILD OK - migrations included"
 
-# Start server directly (run prisma db push separately)
+# Start server (auto-runs prisma db push + seed on startup)
 WORKDIR /app/apps/api
 CMD ["node", "dist/index.js"]
