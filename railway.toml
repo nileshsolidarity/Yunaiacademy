@@ -1,11 +1,9 @@
 [build]
 builder = "nixpacks"
-
-[build.nixpacks]
-pkgs = ["nodejs_20", "pnpm"]
+buildCommand = "corepack enable && corepack prepare pnpm@10.30.0 --activate && pnpm install --frozen-lockfile && pnpm --filter @yunai/api build"
 
 [deploy]
-startCommand = "cd apps/api && npx prisma db push --skip-generate && pnpm start"
+startCommand = "corepack enable && cd apps/api && npx prisma db push --skip-generate && pnpm start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
