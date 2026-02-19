@@ -196,10 +196,13 @@ export default function StudentDashboard() {
                       </div>
                     </div>
                     <Link
-                      to={`/courses/${enrollment.course?.slug}`}
+                      to={enrollment.course?.modules?.[0]?.lessons?.[0]?.id
+                        ? `/learn/${enrollment.course.slug}/${enrollment.course.modules[0].lessons[0].id}`
+                        : `/courses/${enrollment.course?.slug}`
+                      }
                       className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                     >
-                      Continue Learning
+                      Continue Learning →
                     </Link>
                   </CardContent>
                 </Card>

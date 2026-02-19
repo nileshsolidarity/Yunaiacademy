@@ -14,6 +14,17 @@ enrollmentRouter.get('/', authenticate, async (req, res, next) => {
           include: {
             instructor: { select: { id: true, name: true, avatar: true } },
             _count: { select: { modules: true } },
+            modules: {
+              orderBy: { order: 'asc' },
+              take: 1,
+              include: {
+                lessons: {
+                  orderBy: { order: 'asc' },
+                  take: 1,
+                  select: { id: true },
+                },
+              },
+            },
           },
         },
       },
