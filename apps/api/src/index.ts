@@ -1,5 +1,13 @@
 import { execSync } from 'child_process';
 
+// Fix: Trim whitespace/newlines from critical env vars (Railway copy-paste issue)
+if (process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.trim();
+}
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL = process.env.FRONTEND_URL.trim();
+}
+
 async function runMigrations() {
   try {
     console.log('🗄️  Running database migrations (prisma db push)...');

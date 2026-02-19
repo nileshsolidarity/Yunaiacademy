@@ -61,6 +61,10 @@ app.get('/api/health', (_req, res) => {
 
 // Database diagnostic (temporary)
 app.get('/api/debug/db', async (_req, res) => {
+  const dbUrl = process.env.DATABASE_URL || 'NOT SET';
+  const masked = dbUrl !== 'NOT SET' ? dbUrl.replace(/:[^:@]+@/, ':***@') : dbUrl;
+  const urlLen = dbUrl.length;
+  const lastCharCode = dbUrl.charCodeAt(dbUrl.length - 1);
   try {
     const { prisma } = await import('./lib/prisma.js');
     await prisma.$queryRaw`SELECT 1`;
@@ -71,7 +75,9 @@ app.get('/api/debug/db', async (_req, res) => {
       dbConnected: true,
       users: userCount,
       courses: courseCount,
-      dbUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:@]+@/, ':***@') : 'NOT SET',
+      dbUrl: masked,
+      dbUrlLength: urlLen,
+      lastCharCode,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -79,7 +85,9 @@ app.get('/api/debug/db', async (_req, res) => {
       success: false,
       dbConnected: false,
       error: message,
-      dbUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:@]+@/, ':***@') : 'NOT SET',
+      dbUrl: masked,
+      dbUrlLength: urlLen,
+      lastCharCode,
     });
   }
 });
