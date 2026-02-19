@@ -10,15 +10,12 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/ ./apps/api/
 COPY packages/shared/ ./packages/shared/
 
-# Install all dependencies (including dev for prisma CLI)
+# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
 # Generate Prisma client and build API
 RUN pnpm --filter @yunai/api build
 
-# Expose port
-EXPOSE ${PORT:-3001}
-
-# Start server directly with tsx (skip prisma db push for now - do manually)
+# Start server
 WORKDIR /app/apps/api
 CMD ["pnpm", "start"]
