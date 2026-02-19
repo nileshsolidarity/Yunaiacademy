@@ -62,11 +62,14 @@ export function AiChatWidget({ courseContext }: AiChatWidgetProps) {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);
-    } catch {
+    } catch (error: any) {
+      const status = error?.response?.status;
       const errorMsg: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: status === 503
+          ? 'AI Tutor service is currently being set up. Please try again later.'
+          : 'Sorry, I encountered an error. Please try again.',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMsg]);

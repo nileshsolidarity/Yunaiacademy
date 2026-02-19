@@ -23,6 +23,7 @@ export default function CourseCatalogPage() {
       setLoading(true);
       try {
         const params = new URLSearchParams();
+        params.set('limit', '50');
         if (search) params.set('search', search);
         if (category) params.set('category', category);
         if (level) params.set('level', level);

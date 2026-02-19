@@ -33,8 +33,12 @@ export default function AiTutorPage() {
     try {
       const { data } = await api.post('/ai/chat', { message: userMsg.content, sessionId });
       setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: data.data.message }]);
-    } catch {
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }]);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const errorMsg = status === 503
+        ? 'AI Tutor service is currently being set up. Please try again later.'
+        : 'Sorry, I encountered an error. Please try again.';
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: errorMsg }]);
     } finally {
       setLoading(false);
     }

@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import ReactPlayer from 'react-player';
 import {
   PlayCircle, FileText, CheckCircle, Circle, ChevronLeft, ChevronRight,
-  Menu, X, Bot,
+  Menu, X, Bot, ClipboardList,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
@@ -79,8 +79,12 @@ export default function LessonPlayerPage() {
     }
   };
 
-  const navigateToLesson = (lid: string) => {
-    navigate(`/learn/${courseSlug}/${lid}`);
+  const navigateToLesson = (lesson: any) => {
+    if (lesson.type === 'QUIZ' && lesson.quizId) {
+      navigate(`/learn/${courseSlug}/quiz/${lesson.quizId}`);
+    } else {
+      navigate(`/learn/${courseSlug}/${lesson.id}`);
+    }
   };
 
   if (loading) {
@@ -116,7 +120,7 @@ export default function LessonPlayerPage() {
                       return (
                         <button
                           key={lesson.id}
-                          onClick={() => navigateToLesson(lesson.id)}
+                          onClick={() => navigateToLesson(lesson)}
                           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
                             isActive
                               ? 'bg-primary-50 text-primary-700 font-medium'
@@ -131,6 +135,7 @@ export default function LessonPlayerPage() {
                           <span className="truncate">{lesson.title}</span>
                           {lesson.type === 'VIDEO' && <PlayCircle className="h-3 w-3 text-gray-400 ml-auto flex-shrink-0" />}
                           {lesson.type === 'TEXT' && <FileText className="h-3 w-3 text-gray-400 ml-auto flex-shrink-0" />}
+                          {lesson.type === 'QUIZ' && <ClipboardList className="h-3 w-3 text-orange-400 ml-auto flex-shrink-0" />}
                         </button>
                       );
                     })}
@@ -177,6 +182,21 @@ export default function LessonPlayerPage() {
                   }}
                 />
               </div>
+            ) : currentLesson?.type === 'QUIZ' && currentLesson.quizId ? (
+              <div className="max-w-2xl mx-auto p-8 text-center">
+                <div className="bg-white rounded-xl p-12 shadow-sm">
+                  <ClipboardList className="h-16 w-16 text-orange-400 mx-auto mb-6" />
+                  <h1 className="text-2xl font-bold text-gray-900 mb-3">{currentLesson.title}</h1>
+                  <p className="text-gray-500 mb-8">Test your knowledge with this quiz. Answer all questions and submit to see your score.</p>
+                  <Button
+                    size="lg"
+                    onClick={() => navigate(`/learn/${courseSlug}/quiz/${currentLesson.quizId}`)}
+                    className="bg-orange-500 hover:bg-orange-600"
+                  >
+                    <ClipboardList className="h-5 w-5" /> Start Quiz
+                  </Button>
+                </div>
+              </div>
             ) : currentLesson?.type === 'TEXT' ? (
               <div className="max-w-4xl mx-auto p-8">
                 <div className="prose prose-lg max-w-none bg-white rounded-xl p-8 shadow-sm">
@@ -195,7 +215,7 @@ export default function LessonPlayerPage() {
           <div className="bg-gray-800 border-t border-gray-700 px-4 py-3 flex items-center justify-between">
             {prevLesson ? (
               <button
-                onClick={() => navigateToLesson(prevLesson.id)}
+                onClick={() => navigateToLesson(prevLesson)}
                 className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
               >
                 <ChevronLeft className="h-4 w-4" /> {prevLesson.title}
@@ -204,7 +224,7 @@ export default function LessonPlayerPage() {
 
             {nextLesson ? (
               <button
-                onClick={() => navigateToLesson(nextLesson.id)}
+                onClick={() => navigateToLesson(nextLesson)}
                 className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
               >
                 {nextLesson.title} <ChevronRight className="h-4 w-4" />

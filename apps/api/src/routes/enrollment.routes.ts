@@ -90,10 +90,24 @@ enrollmentRouter.post('/lessons/:lessonId/complete', authenticate, async (req, r
   } catch (error) { next(error); }
 });
 
-// Get course progress detail
-enrollmentRouter.get('/courses/:courseId/progress', authenticate, async (req, res, next) => {
+// Get course progress detail (accepts courseId or courseSlug)
+enrollmentRouter.get('/courses/:courseIdOrSlug/progress', authenticate, async (req, res, next) => {
   try {
-    const courseId = req.params.courseId as string;
+    const param = req.params.courseIdOrSlug as string;
+
+    // Try to find by ID first, then by slug
+    let course = await prisma.course.findUnique({ where: { id: param }, select: { id: true } });
+    if (!course) {
+      course = await prisma.course.findUnique({ where: { slug: param }, select: { id: true } });
+    }
+
+    if (!course) {
+      res.status(404).json({ success: false, error: 'Course not found' });
+      return;
+    }
+
+    const courseId = course.id;
+
     const enrollment = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: req.user!.id, courseId } },
     });

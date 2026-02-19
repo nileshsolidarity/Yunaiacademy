@@ -19,6 +19,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -30,6 +31,18 @@ export default function CourseDetailPage() {
         if (data.data.modules?.[0]) {
           setExpandedModules(new Set([data.data.modules[0].id]));
         }
+        // Check if user is enrolled
+        if (user) {
+          try {
+            const enrollRes = await api.get('/enrollments');
+            const enrolled = enrollRes.data.data?.some(
+              (e: any) => e.courseId === data.data.id
+            );
+            setIsEnrolled(!!enrolled);
+          } catch {
+            // Not logged in or enrollments fetch failed, that's ok
+          }
+        }
       } catch {
         toast.error('Course not found');
         navigate('/courses');
@@ -38,7 +51,7 @@ export default function CourseDetailPage() {
       }
     };
     fetchCourse();
-  }, [slug, navigate]);
+  }, [slug, navigate, user]);
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) => {
@@ -188,9 +201,26 @@ export default function CourseDetailPage() {
               <CardContent className="p-6">
                 <div className="text-3xl font-bold text-gray-900 mb-2">Free</div>
                 <p className="text-gray-500 text-sm mb-6">Full access to all course content</p>
-                <Button onClick={handleEnroll} loading={enrolling} className="w-full" size="lg">
-                  Enroll Now
-                </Button>
+                {isEnrolled ? (
+                  <Button
+                    onClick={() => {
+                      const firstLesson = course.modules?.[0]?.lessons?.[0];
+                      if (firstLesson) {
+                        navigate(`/learn/${slug}/${firstLesson.id}`);
+                      } else {
+                        navigate('/dashboard');
+                      }
+                    }}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    size="lg"
+                  >
+                    <BookOpen className="h-5 w-5" /> Continue Learning
+                  </Button>
+                ) : (
+                  <Button onClick={handleEnroll} loading={enrolling} className="w-full" size="lg">
+                    Enroll Now
+                  </Button>
+                )}
                 <div className="mt-6 space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
                     <CheckCircle className="h-4 w-4 text-green-500" /> {totalLessons} lessons

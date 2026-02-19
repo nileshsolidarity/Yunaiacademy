@@ -55,7 +55,12 @@ courseRouter.get('/:slug', async (req, res, next) => {
         instructor: { select: { id: true, name: true, avatar: true, bio: true } },
         modules: {
           orderBy: { order: 'asc' },
-          include: { lessons: { orderBy: { order: 'asc' }, select: { id: true, title: true, type: true, duration: true, order: true } } },
+          include: {
+            lessons: {
+              orderBy: { order: 'asc' },
+              select: { id: true, title: true, type: true, content: true, videoUrl: true, duration: true, order: true, quizId: true },
+            },
+          },
         },
         _count: { select: { enrollments: true, reviews: true } },
       },
