@@ -58,7 +58,10 @@ courseRouter.get('/:slug', async (req, res, next) => {
           include: {
             lessons: {
               orderBy: { order: 'asc' },
-              select: { id: true, title: true, type: true, content: true, videoUrl: true, duration: true, order: true, quizId: true },
+              select: {
+                id: true, title: true, type: true, content: true, videoUrl: true, duration: true, order: true,
+                quiz: { select: { id: true } },
+              },
             },
           },
         },

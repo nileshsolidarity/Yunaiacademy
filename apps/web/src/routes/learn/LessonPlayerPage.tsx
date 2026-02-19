@@ -80,8 +80,9 @@ export default function LessonPlayerPage() {
   };
 
   const navigateToLesson = (lesson: any) => {
-    if (lesson.type === 'QUIZ' && lesson.quizId) {
-      navigate(`/learn/${courseSlug}/quiz/${lesson.quizId}`);
+    const quizId = lesson.quiz?.id || lesson.quizId;
+    if (lesson.type === 'QUIZ' && quizId) {
+      navigate(`/learn/${courseSlug}/quiz/${quizId}`);
     } else {
       navigate(`/learn/${courseSlug}/${lesson.id}`);
     }
@@ -182,7 +183,7 @@ export default function LessonPlayerPage() {
                   }}
                 />
               </div>
-            ) : currentLesson?.type === 'QUIZ' && currentLesson.quizId ? (
+            ) : currentLesson?.type === 'QUIZ' && (currentLesson.quiz?.id || currentLesson.quizId) ? (
               <div className="max-w-2xl mx-auto p-8 text-center">
                 <div className="bg-white rounded-xl p-12 shadow-sm">
                   <ClipboardList className="h-16 w-16 text-orange-400 mx-auto mb-6" />
@@ -190,7 +191,7 @@ export default function LessonPlayerPage() {
                   <p className="text-gray-500 mb-8">Test your knowledge with this quiz. Answer all questions and submit to see your score.</p>
                   <Button
                     size="lg"
-                    onClick={() => navigate(`/learn/${courseSlug}/quiz/${currentLesson.quizId}`)}
+                    onClick={() => navigate(`/learn/${courseSlug}/quiz/${currentLesson.quiz?.id || currentLesson.quizId}`)}
                     className="bg-orange-500 hover:bg-orange-600"
                   >
                     <ClipboardList className="h-5 w-5" /> Start Quiz
