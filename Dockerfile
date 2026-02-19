@@ -5,23 +5,18 @@ RUN corepack enable && corepack prepare pnpm@10.30.0 --activate
 
 WORKDIR /app
 
-# Copy monorepo config files first (for dependency caching)
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
+# Copy everything at once (no caching - ensures fresh build)
+COPY . .
 
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code (separate layer to bust cache when code changes)
-COPY packages/shared/ ./packages/shared/
-COPY apps/api/ ./apps/api/
-
 # Build shared package first, then API
-RUN pnpm --filter @yunai/shared build && pnpm --filter @yunai/api build
+RUN pnpm --filter @yunai/shared build
+RUN pnpm --filter @yunai/api build
 
-# Verify the build output exists
-RUN ls -la apps/api/dist/index.js && echo "✅ API build verified"
+# Verify builds exist
+RUN ls apps/api/dist/index.js && echo "BUILD OK"
 
 # Start server
 WORKDIR /app/apps/api
