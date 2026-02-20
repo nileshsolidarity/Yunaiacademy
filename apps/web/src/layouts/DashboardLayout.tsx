@@ -5,7 +5,6 @@ import {
   BookOpen,
   Trophy,
   MessageSquare,
-  Bell,
   Bot,
   Settings,
 } from 'lucide-react';
@@ -17,7 +16,6 @@ const studentLinks = [
   { to: '/dashboard/certificates', icon: Trophy, label: 'Certificates' },
   { to: '/dashboard/ai-tutor', icon: Bot, label: 'AI Tutor' },
   { to: '/community', icon: MessageSquare, label: 'Community' },
-  { to: '/dashboard/notifications', icon: Bell, label: 'Notifications' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
