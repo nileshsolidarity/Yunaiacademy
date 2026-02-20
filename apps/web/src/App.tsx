@@ -19,6 +19,7 @@ const CertificatesPage = lazy(() => import('./routes/dashboard/CertificatesPage'
 const AiTutorPage = lazy(() => import('./routes/dashboard/AiTutorPage'));
 const MyCoursesPage = lazy(() => import('./routes/dashboard/MyCoursesPage'));
 const SettingsPage = lazy(() => import('./routes/dashboard/SettingsPage'));
+const CommunicationsPage = lazy(() => import('./routes/dashboard/CommunicationsPage'));
 const InstructorDashboard = lazy(() => import('./routes/instructor/InstructorDashboard'));
 const CreateCoursePage = lazy(() => import('./routes/instructor/CreateCoursePage'));
 const EditCoursePage = lazy(() => import('./routes/instructor/EditCoursePage'));
@@ -80,6 +81,7 @@ export default function App() {
             <Route path="/dashboard/courses" element={<MyCoursesPage />} />
             <Route path="/dashboard/certificates" element={<CertificatesPage />} />
             <Route path="/dashboard/ai-tutor" element={<AiTutorPage />} />
+            <Route path="/dashboard/communications" element={<CommunicationsPage />} />
             <Route path="/dashboard/settings" element={<SettingsPage />} />
           </Route>
         </Route>

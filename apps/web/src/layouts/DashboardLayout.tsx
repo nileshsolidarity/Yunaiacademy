@@ -5,6 +5,7 @@ import {
   BookOpen,
   Trophy,
   MessageSquare,
+  Mail,
   Bot,
   Settings,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ const studentLinks = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/dashboard/courses', icon: BookOpen, label: 'My Courses' },
   { to: '/dashboard/certificates', icon: Trophy, label: 'Certificates' },
+  { to: '/dashboard/communications', icon: Mail, label: 'Messages' },
   { to: '/dashboard/ai-tutor', icon: Bot, label: 'AI Tutor' },
   { to: '/community', icon: MessageSquare, label: 'Community' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
@@ -22,6 +24,7 @@ const studentLinks = [
 const instructorLinks = [
   { to: '/instructor', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/instructor/courses', icon: BookOpen, label: 'My Courses' },
+  { to: '/dashboard/communications', icon: Mail, label: 'Messages' },
   { to: '/community', icon: MessageSquare, label: 'Community' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
@@ -30,6 +33,7 @@ const adminLinks = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/users', icon: Settings, label: 'Users' },
   { to: '/admin/courses', icon: BookOpen, label: 'Courses' },
+  { to: '/dashboard/communications', icon: Mail, label: 'Messages' },
   { to: '/community', icon: MessageSquare, label: 'Community' },
 ];
 

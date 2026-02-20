@@ -29,6 +29,27 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  subject: string | null;
+  content: string;
+  read: boolean;
+  createdAt: string;
+  sender?: { id: string; name: string; avatar: string | null };
+  receiver?: { id: string; name: string; avatar: string | null };
+}
+
+export interface Conversation {
+  userId: string;
+  userName: string;
+  userAvatar: string | null;
+  lastMessage: string;
+  lastMessageAt: string;
+  unreadCount: number;
+}
+
 export interface AiChatMessage {
   id: string;
   userId: string;

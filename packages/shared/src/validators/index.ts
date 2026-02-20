@@ -78,6 +78,13 @@ export const createCommentSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty').max(2000),
 });
 
+// Message validators
+export const sendMessageSchema = z.object({
+  receiverId: z.string().min(1, 'Receiver is required'),
+  subject: z.string().max(200).optional().nullable(),
+  content: z.string().min(1, 'Message cannot be empty').max(5000),
+});
+
 // Pagination validator
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -100,4 +107,5 @@ export type QuizSubmissionInput = z.infer<typeof quizSubmissionSchema>;
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;

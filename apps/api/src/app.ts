@@ -17,6 +17,7 @@ import { notificationRouter } from './routes/notification.routes.js';
 import { aiRouter } from './routes/ai.routes.js';
 import { dashboardRouter } from './routes/dashboard.routes.js';
 import { certificateRouter } from './routes/certificate.routes.js';
+import { messageRouter } from './routes/message.routes.js';
 import { sitemapRouter } from './routes/sitemap.routes.js';
 
 const app: Express = express();
@@ -89,6 +90,7 @@ app.use('/api/reviews', reviewRouter);
 app.use('/api/community', communityRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/messages', messageRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/certificates', certificateRouter);
 app.use('/api/sitemap', sitemapRouter);

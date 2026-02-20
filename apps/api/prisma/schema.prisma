@@ -56,6 +56,8 @@ model User {
   posts          Post[]
   comments       Comment[]
   notifications  Notification[]
+  sentMessages   Message[]        @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
   aiChatHistory  AiChatHistory[]
 
   @@map("users")
@@ -273,6 +275,24 @@ model Notification {
 
   @@index([userId])
   @@map("notifications")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  subject    String?
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([receiverId, read])
+  @@map("messages")
 }
 
 model AiChatHistory {
